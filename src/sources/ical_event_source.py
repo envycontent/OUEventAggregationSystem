@@ -1,0 +1,30 @@
+from icalendar import Calendar, Event
+from utils.nesting_exception import NestingException
+import models
+
+def load_ical(open, raw_hacks=[]):
+    """ Utility method to load an ical file and yield the events within it """
+    with open() as stream:
+        text = stream.read()
+        if text == "":
+            # Stupid bug in Calendar parser, doesn't accept empty files.
+            return
+
+        for raw_hack in raw_hacks:
+            text = raw_hack(text)
+
+        calendar = Calendar.from_string(text)
+
+        for component in calendar.walk('VEVENT'):
+            name = component.get("summary")
+            start = component.get("dtstart").dt
+            end = getattr(component.get("dtend"), "dt", None)
+            yield models.Event(name=name, start=start, end=end)
+
+class ICalEventSource(object):
+    """ An event source which reads ical data from a specified context manager """
+    def __init__(self, open):
+        self.open = open
+
+    def __call__(self):
+        return load_ical(self.open)
