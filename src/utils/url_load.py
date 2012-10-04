@@ -4,18 +4,16 @@ from lxml.html import soupparser
 import re
 
 """ Utility methods that are useful to loading urls """
-
-def do_nothing_context_manager(method, *args, **kwargs):
-    def func():
-        yield method(*args, **kwargs)
-    return contextmanager(func)
-
 def url_opener(url):
-    """ Given a url, returns a context manager object that will load it. You 
-    could do:
+    """ Given a url, returns a function that will load it, using a 
+    context manager. You could do:
     
     s = ICalEventSource(url_opener("http://www.medsci.ox.ac.uk/research/seminars/seminars-in-the-msd/ics_view")) """
-    return do_nothing_context_manager(urllib2.urlopen, url)
+    return lambda: url_open(url)
+
+@contextmanager
+def url_open(url):
+    yield urllib2.urlopen(url)
 
 def load_soup(open):
     """ From a context manager, loads a url and interprets it into a soup object,
