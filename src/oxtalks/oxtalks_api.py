@@ -91,6 +91,8 @@ class OxTalksAPI(object):
         if talk.id is not None:
             url = url + str(talk.id)
 
+        print "UPDATE %s" % url
+
         data = [("talk[title]", talk.name),
                 ("talk[abstract]", talk.description),
                 ("talk[name_of_speaker]", talk.speaker),
@@ -105,12 +107,14 @@ class OxTalksAPI(object):
             data.append(("talk[list_id_strings][]", str(l.id)))
 
         response = requests.post(url, data, auth=self.auth)
-        print response.content
         if response.status_code != 200:
-            raise OxTalksAPIException("Failed to create talk %s" % talk, response.content)
+            raise OxTalksAPIException("Failed to create talk %s\nPost was %s" % (talk, data), response.content)
 
     def _delete_talk(self, talk):
         url = 'http://%s/talk/delete/%s' % (self.host, talk.id)
+
+        print "DELETE %s" % url
+
         response = requests.post(url, auth=self.auth)
         if response.status_code != 200:
             raise OxTalksAPIException("Failed to delete talk %s" % talk, response.content)
@@ -119,6 +123,7 @@ class OxTalksAPI(object):
         if not managed_list.is_managed_list:
             raise OxTalksAPIException("Can only create managed lists on remote Oxford Talks")
         url = 'http://%s/list/api_create' % self.host
+        print "POST %s" % url
         data = {"list[name]":managed_list.name,
                                  "list[list_type]":managed_list.list_type}
         response = requests.post(url, data, auth=self.auth)

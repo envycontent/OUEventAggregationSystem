@@ -80,7 +80,7 @@ def _safe_len(obj):
 def standard_combine_talks(old_talk, new_talks):
     lists = set(itertools.chain.from_iterable(map(lambda talk: talk.lists + [talk.master_list], new_talks)))
     if old_talk is not None:
-        lists.update(old_talk.lists)
+        #lists.update(old_talk.lists)
         master_list = old_talk.master_list
         id = old_talk.id
     else:
@@ -112,6 +112,8 @@ def standard_combine_talks(old_talk, new_talks):
 class TalksList(object):
     __slots__ = ['name', 'list_type', 'id']
     def __init__(self, name, list_type, id):
+        if name is None:
+            raise ValueError("Name can't be none")
         self.name = name
         self.list_type = list_type
         self.id = id

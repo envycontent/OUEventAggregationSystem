@@ -35,5 +35,5 @@ class OxItems(object):
                                            master_list=list_manager.get_or_create_managed_list_by_name(oxitems_feed_longname)):
                         yield event
                         yield event
-            except:
+            except Exception:
                 log_exception(logger, "Oxitems failed on %s (%s)" % (oxitems_feed_id, ical_url))
