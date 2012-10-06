@@ -50,5 +50,5 @@ class ICalEventSource(object):
 
     def __call__(self, list_manager):
         master_list = list_manager.get_or_create_managed_list_by_name(self.master_list_name)
-        return load_ical(self.opener, master_list=master_list)
+        return load_ical(self.opener, master_list=master_list, lists=[master_list])
 
