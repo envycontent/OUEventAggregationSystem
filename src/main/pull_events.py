@@ -12,6 +12,7 @@ from concurrent.futures import ThreadPoolExecutor
 logging.basicConfig()
 logger = logging.getLogger("OUEventsAggregationSystem")
 
+
 """getOII(), getStAntonys(), getPhysics(), getPolitics(), getRobotics(),
                 getMaths(), getEconomics(), getTheology(), getWIMM(), getDPAG2011(), getOxfordWhatsOn(),
                 getOxUniversityScientificSociety(), getEngineeringSociety(), getMaterialsSociety(),

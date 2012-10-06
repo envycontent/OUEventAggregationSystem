@@ -15,7 +15,6 @@ class Event(object):
             raise ValueError()
         if getattr(end, "tzinfo", None) is None:
             raise ValueError()
-
         self.name = name
         self.description = description
         self.start = start
@@ -161,3 +160,4 @@ class TalksListManager(object):
                 if list.is_managed_list:
                     self.managed_lists_by_name[name] = list
             return list
+
