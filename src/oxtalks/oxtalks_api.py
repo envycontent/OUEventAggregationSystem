@@ -13,6 +13,8 @@ import requests
 import urllib
 import urllib2
 import urlparse
+import StringIO
+from xml.sax.saxutils import escape, unescape
 
 def safe_unpack(l):
     if len(l) == 0:
@@ -25,6 +27,12 @@ def safe_unpack(l):
 def safe_str(o):
     return str(o) if o is not None else ""
 
+def safe(func, error=Exception, default=""):
+    try:
+        return func()
+    except:
+        return default
+
 def _create_time(time):
     return "%s:%s" % (time.hour, time.minute)
 
@@ -33,35 +41,6 @@ def _create_date(date):
 
 def _format_location(location):
     return location or ""
-
-def _create_basicauth_opener(host, username, password):
-    password_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
-    password_mgr.add_password(None, "http://%s" % host, username, password)
-    handler = PreemptiveBasicAuthHandler(password_mgr)
-    return urllib2.build_opener(handler)
-
-class PreemptiveBasicAuthHandler(urllib2.BaseHandler):
-    """ We need preemptive basic auth to talk to Oxford Talks. Can't believe
-    there isn't anything like this in urllib or urllib2.
-    
-    Copied from:
-    
-    http://stackoverflow.com/questions/4628610/does-urllib2-support-preemptive-authentication-authentication """
-    def __init__(self, password_mgr=None):
-        if password_mgr is None:
-            password_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
-        self.passwd = password_mgr
-        self.add_password = self.passwd.add_password
-
-    def http_request(self, req):
-        uri = req.get_full_url()
-        user, pw = self.passwd.find_user_password(None, uri)
-        if pw is None:
-            return req
-        raw = "%s:%s" % (user, pw)
-        auth = 'Basic %s' % base64.b64encode(raw).strip()
-        req.add_unredirected_header('Authorization', auth)
-        return req
 
 class OxTalksAPI(object):
 
@@ -153,13 +132,12 @@ class OxTalksAPI(object):
             return result, lists_manager
 
     def _convert_xml_to_talk(self, talk_root, list_manager):
-        name, = talk_root.xpath("title/text()")
-        name = safe_str(name)
+        name = safe(lambda: unicode(unescape(talk_root.xpath("title/text()")[0])))
         id, = talk_root.xpath("id/text()")
         id = int(id)
-        description = safe_str(safe_unpack(talk_root.xpath("abstract/text()")))
-        speaker = safe_str(safe_unpack(talk_root.xpath("speaker/text()")))
-        location = safe_str(safe_unpack(talk_root.xpath("venue/text()")))
+        description = safe(lambda: unicode(unescape(talk_root.xpath("abstract/text()")[0])))
+        speaker = safe(lambda: unicode(unescape(talk_root.xpath("speaker/text()")[0])))
+        location = safe(lambda: unicode(unescape(talk_root.xpath("venue/text()")[0])))
         start, = talk_root.xpath("start_time/text()")
         start = dateutil.parser.parse(start)
         end, = talk_root.xpath("end_time/text()")

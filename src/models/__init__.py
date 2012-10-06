@@ -3,6 +3,7 @@ import itertools
 from utils import safe_len
 import datetime
 import pytz
+from threading import RLock
 
 class Event(object):
     __slots__ = ["name", "description", "start", "end", "location", "speaker", "lists", "master_list", "id"]
@@ -64,7 +65,7 @@ def merge_talks_by_key(talks, old_talks, key_gen, combine_talks):
     return reduced_talks, old_talks_by_id.values()
 
 def standard_talk_key(talk):
-    return (talk.name, talk.start)
+    return (unicode(talk.name), talk.start)
 
 def first_non_none(items, key):
     for item in items:
@@ -131,27 +132,32 @@ class TalksListManager(object):
     def __init__(self):
         self.lists_by_id = dict()
         self.managed_lists_by_name = dict()
+        self.lock = RLock()
 
     def get_list_by_id(self, id):
-        return self.lists_by_id.get(id, None)
+        with self.lock:
+            return self.lists_by_id.get(id, None)
 
     def get_managed_list_by_name(self, name):
-        return self.managed_lists_by_name.get(name, None)
+        with self.lock:
+            return self.managed_lists_by_name.get(name, None)
 
     def get_or_create_managed_list_by_name(self, name):
-        list = self.managed_lists_by_name.get(name, None)
-        if list is None:
-            list = TalksList(name, managed_lists_type, None)
-            self.managed_lists_by_name[name] = list
-        return list
+        with self.lock:
+            list = self.managed_lists_by_name.get(name, None)
+            if list is None:
+                list = TalksList(name, managed_lists_type, None)
+                self.managed_lists_by_name[name] = list
+            return list
 
     def get_or_create_list_by_id(self, id, name, list_type):
-        list = self.lists_by_id.get(id, None)
-        if list is None:
-            if name is None or type is None:
-                raise ValueError("Couldn't instantiate new list")
-            list = TalksList(name, list_type, id)
-            self.lists_by_id[id] = list
-            if list.is_managed_list:
-                self.managed_lists_by_name[name] = list
-        return list
+        with self.lock:
+            list = self.lists_by_id.get(id, None)
+            if list is None:
+                if name is None or type is None:
+                    raise ValueError("Couldn't instantiate new list")
+                list = TalksList(name, list_type, id)
+                self.lists_by_id[id] = list
+                if list.is_managed_list:
+                    self.managed_lists_by_name[name] = list
+            return list

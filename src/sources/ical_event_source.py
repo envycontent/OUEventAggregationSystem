@@ -4,6 +4,7 @@ from utils.parsing import local_tz
 import datetime
 from utils.nesting_exception import log_exception
 import logging
+from utils.url_load import url_opener
 
 logger = logging.getLogger(__name__)
 
@@ -43,8 +44,10 @@ def load_ical(open, raw_hacks=[], master_list=None, lists=[]):
 
 class ICalEventSource(object):
     """ An event source which reads ical data from a specified context manager """
-    def __init__(self, open):
-        self.open = open
+    def __init__(self, url=None, name=None):
+        self.opener = url_opener(url)
+        self.master_list_name = name
 
-    def __call__(self):
-        return load_ical(self.open)
+    def __call__(self, list_manager):
+        master_list = list_manager.get_or_create_managed_list_by_name(self.master_list_name)
+        return load_ical(self.opener, master_list=master_list)

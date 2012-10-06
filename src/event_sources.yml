@@ -1,0 +1,50 @@
+sources:
+  - class: rss_event_source.EventRSSSource
+    url: http://www.oii.ox.ac.uk/events/feed/
+
+  - class: oxitems.OxItems
+
+  - class: oxford_university_whatson.WhatsOn
+
+  - type: ical
+    name: St Antony's College
+    url: http://www.google.com/calendar/ical/it-support%40sant.ox.ac.uk/public/basic
+
+  - type: ical
+    name: Oxford University Information Security and Privacy Programme
+    url: http://www.google.com/calendar/ical/v100pqq0pa2liar2dlrl2ofu24%40group.calendar.google.com/public/basic.ics
+
+  - type: ical
+    name: Oxford University Engineering Society
+    url: http://www.google.com/calendar/ical/6au0blf8a44uh63ngfnt8v09g0%40group.calendar.google.com/public/basic.ics
+      
+  - type: ical
+    name: The Materials Society
+    url: http://www.google.com/calendar/ical/materials.society%40studentclubs.ox.ac.uk/public/basic.ics
+     
+  - type: ical
+    name: Department of Politics and International Relations
+    url: http://www.politics.ox.ac.uk/index.php/eventlist.html?format=ical
+     
+  - type: ical
+    name: Theology Faculty Seminars
+    url: http://www.google.com/calendar/ical/theology.events%40googlemail.com/public/basic.ics
+     
+  - type: ical
+    name: Weatherall Institute of Molecular Medicine
+    url: http://www.imm.ox.ac.uk/seminars/wimm_seminars/ics_view
+
+  - type: ical
+    name: Oxford Materials Seminars
+    url: https://www.google.com/calendar/ical/oxfordmaterials%40gmail.com/private-c8aa75c0ec1978d9994214dbcbabf854/basic.ics
+     
+  - type: ical
+    name: Earth Sciences Seminars
+    url: http://www.google.com/calendar/ical/6rde7u7ats30ajc4oq7850sbrc%40group.calendar.google.com/public/basic.ics
+  
+  - type: ical
+    name: Mathematical Institute Seminars
+    url: http://www.maths.ox.ac.uk/events/calendar/2012-10/all/all/ical
+     
+     
+     
