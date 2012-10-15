@@ -53,4 +53,7 @@ sources:
   - type: ical
     name: Oxford Uehiro Centre for Practical Ethics
     url: http://www.practicalethics.ox.ac.uk/events/ical/uehiro
-     
+
+  - type: ical
+    name: Department of Computer Science
+    url: http://www.cs.ox.ac.uk/feeds/SeminarSeries-All.ics
