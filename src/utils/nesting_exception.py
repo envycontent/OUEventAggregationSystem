@@ -38,13 +38,13 @@ class NestingException(Exception):
         if self.nested_exception != None:
             self._print_exc(output_file)
 
-    def log_exc(self, logger):
+    def log_exc(self, logger_method):
         """ Method for printing this exception to a logger. 
         Must be called from within the except block to grab the outer most
         stack trace. """
         message = StringIO()
         self.print_exc(message)
-        logger.error(message.getvalue())
+        logger_method(message.getvalue())
 
     def _print_exc(self, output_file):
         """ Recursive method for printing our nested exception and any further children """
@@ -53,11 +53,17 @@ class NestingException(Exception):
             print("Caused by:", file=output_file)
             self.nested_exception._print_exc(output_file)
 
-def log_exception(logger, msg):
+def log_exception_via(logger_method, msg):
     """ Generic method for logging any exceptions, but also handles NestingExceptions """
     nested_type, nested_exception, nested_traceback = sys.exc_info()
     if isinstance(nested_exception, NestingException):
-        logger.error(msg)
-        nested_exception.log_exc(logger)
+        # Log the message, but handle logging the exception ourselves
+        logger_method(msg)
+        nested_exception.log_exc(logger_method)
     else:
-        logger.exception(msg)
+        # Use standard logging for the exception
+        logger_method(msg, exc_info=True)
+
+def log_exception(logger, msg):
+    """ Generic method for logging any exceptions, but also handles NestingExceptions """
+    log_exception_via(logger.error, msg)

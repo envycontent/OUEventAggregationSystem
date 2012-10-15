@@ -15,6 +15,8 @@ import urllib2
 import urlparse
 import StringIO
 from xml.sax.saxutils import escape, unescape
+from utils.parsing import local_tz
+import itertools
 
 def safe_unpack(l):
     if len(l) == 0:
@@ -30,10 +32,11 @@ def safe_str(o):
 def safe(func, error=Exception, default=""):
     try:
         return func()
-    except:
+    except error:
         return default
 
-def _create_time(time):
+def _create_time(dt):
+    time = dt.astimezone(local_tz).time()
     return "%s:%s" % (time.hour, time.minute)
 
 def _create_date(date):
@@ -41,6 +44,16 @@ def _create_date(date):
 
 def _format_location(location):
     return location or ""
+
+def html_unescape(text):
+    return unescape(text, {"&quot;": "\""})
+
+def trim_event_name(event):
+    max_length = 245
+    if len(event.name) > max_length:
+        return event.clone_with_modifications(name=event.name[:max_length])
+    else:
+        return event
 
 class OxTalksAPI(object):
 
@@ -53,6 +66,8 @@ class OxTalksAPI(object):
     def upload(self, talks):
         if self.old_talks is None:
             raise OxTalksAPIException("Talks not loaded")
+
+        talks = itertools.imap(trim_event_name, talks)
 
         new_talks, old_redundant_talks = merge_talks_by_key(talks, self.old_talks, standard_talk_key, standard_combine_talks)
 
@@ -77,8 +92,8 @@ class OxTalksAPI(object):
                 ("talk[name_of_speaker]", talk.speaker),
                 ("talk[venue_name]", talk.location),
                 ("talk[series_id_string]", talk.master_list.id),
-                ("talk[start_time_string]", _create_time(talk.start.time())),
-                ("talk[end_time_string]", _create_time(talk.end.time())),
+                ("talk[start_time_string]", _create_time(talk.start)),
+                ("talk[end_time_string]", _create_time(talk.end)),
                 ("talk[date_string]", _create_date(talk.start.date())),
                 ("talk[organiser_email]", self.username)]
 
@@ -104,13 +119,16 @@ class OxTalksAPI(object):
         url = 'http://%s/list/api_create' % self.host
         print "POST %s" % url
         data = {"list[name]":managed_list.name,
-                                 "list[list_type]":managed_list.list_type}
+                "list[list_type]":managed_list.list_type}
         response = requests.post(url, data, auth=self.auth)
         if response.status_code != 200:
             raise OxTalksAPIException("Failed to create managed list %s" % managed_list.name, response.content)
         else:
-            list_soup = soupparser.fromstring(response.content)
-            return int(list_soup.xpath("list/id/text()")[0])
+            try:
+                list_soup = soupparser.fromstring(response.content)
+                return int(list_soup.xpath("list/id/text()")[0])
+            except Exception:
+                raise OxTalksAPIException("Failed to read otherwise successful response from %s" % response.content)
 
     def load_talks(self):
         talks, list_manager = self._load_talks()
@@ -121,9 +139,9 @@ class OxTalksAPI(object):
         #talks_url = "http://%s/show/xml/4032" % self.host
         #with open("/home/richard/oxford-talks/all") as f:
         asd = None
-        with url_open("http://%s/show/xml/all_future" % self.host) as f:
+        with url_open("http://%s/show/xml/all_future_managed_talks" % self.host) as f:
             asd = f.read()
-        with url_open("http://%s/show/xml/all_future" % self.host) as f:
+        with url_open("http://%s/show/xml/all_future_managed_talks" % self.host) as f:
             root = etree.parse(f)
             lists_manager = TalksListManager()
             result = []
@@ -132,12 +150,12 @@ class OxTalksAPI(object):
             return result, lists_manager
 
     def _convert_xml_to_talk(self, talk_root, list_manager):
-        name = safe(lambda: unicode(unescape(talk_root.xpath("title/text()")[0])))
+        name = safe(lambda: unicode(html_unescape(talk_root.xpath("title/text()")[0])))
         id, = talk_root.xpath("id/text()")
         id = int(id)
-        description = safe(lambda: unicode(unescape(talk_root.xpath("abstract/text()")[0])))
-        speaker = safe(lambda: unicode(unescape(talk_root.xpath("speaker/text()")[0])))
-        location = safe(lambda: unicode(unescape(talk_root.xpath("venue/text()")[0])))
+        description = safe(lambda: unicode(html_unescape(talk_root.xpath("abstract/text()")[0])))
+        speaker = safe(lambda: unicode(html_unescape(talk_root.xpath("speaker/text()")[0])))
+        location = safe(lambda: unicode(html_unescape(talk_root.xpath("venue/text()")[0])))
         start, = talk_root.xpath("start_time/text()")
         start = dateutil.parser.parse(start)
         end, = talk_root.xpath("end_time/text()")
@@ -163,6 +181,3 @@ class OxTalksAPI(object):
             raise OxTalksAPIException("Master List isn't known about yet")
 
         return Event(name, description, start, end, location, speaker, lists, master_list, id=id)
-
-
-        #events = load_ical(url_opener(talks_url))

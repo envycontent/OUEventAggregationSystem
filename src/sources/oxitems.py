@@ -1,6 +1,6 @@
 from sources.ical_event_source import load_ical
 from utils.url_load import load_soup, url_opener
-from utils.nesting_exception import log_exception
+from utils.nesting_exception import log_exception, log_exception_via
 import logging
 
 logger = logging.getLogger(__name__)
@@ -35,4 +35,4 @@ class OxItems(object):
                                            master_list=list_manager.get_or_create_managed_list_by_name(oxitems_feed_longname)):
                         yield event
             except Exception:
-                log_exception(logger, "Oxitems failed on %s (%s)" % (oxitems_feed_id, ical_url))
+                log_exception_via(logger.warning, "Oxitems failed on %s (%s)" % (oxitems_feed_id, ical_url))

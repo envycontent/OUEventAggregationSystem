@@ -46,5 +46,11 @@ sources:
     name: Mathematical Institute Seminars
     url: http://www.maths.ox.ac.uk/events/calendar/2012-10/all/all/ical
      
+  - type: ical
+    name: Interesting Talks Oxford
+    url: https://www.google.com/calendar/ical/interestingtalksoxford%40gmail.com/public/basic.ics
      
+  - type: ical
+    name: Oxford Uehiro Centre for Practical Ethics
+    url: http://www.practicalethics.ox.ac.uk/events/ical/uehiro
      

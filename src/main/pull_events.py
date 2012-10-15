@@ -8,61 +8,32 @@ import itertools
 from sources.rss_event_source import EventRSSSource
 from sources.source_factory import create_sources
 from concurrent.futures import ThreadPoolExecutor
+from main.main_logging import pull_events_basic_logging
 
-logging.basicConfig()
+pull_events_basic_logging()
+
 logger = logging.getLogger("OUEventsAggregationSystem")
-
-
-"""getOII(), getStAntonys(), getPhysics(), getPolitics(), getRobotics(),
-                getMaths(), getEconomics(), getTheology(), getWIMM(), getDPAG2011(), getOxfordWhatsOn(),
-                getOxUniversityScientificSociety(), getEngineeringSociety(), getMaterialsSociety(),
-                getOUInformationSecurityPrivacyProgramme())"""
-
-# ICal OII, StAntonys, Politics, robotics, theology, WIMM, DPAG, Scientific Society, Engineering Society, Materials Society, Information Security
 
 def _load_talks_from_source(source, list_manager):
     try:
-        return source(list_manager)
-    except:
+        logger.info("Loading events from %s" % source)
+        return list(source(list_manager))
+    except Exception:
         log_exception(logger, "Failed to load from source %s" % source)
+        return []
 
 def pull_events():
-
-    #source = EventRSSSource("http://www.oii.ox.ac.uk/events/feed/")
-    #source = WhatsOn()
-    #source = OxItems()
-
     talks_api = OxTalksAPI("talks-ox-dev.nsms.ox.ac.uk", "richard.hills@gmail.com", "richard")
     talks, lists = talks_api.load_talks()
 
-    with ThreadPoolExecutor(max_workers=3) as executor:
+    with ThreadPoolExecutor(max_workers=5) as executor:
         # Pull from sources on multiple threads at once
         sources = create_sources()
         new_talks = itertools.chain.from_iterable(executor.map(lambda source: _load_talks_from_source(source, lists), sources))
 
-        for talk in new_talks:
-            print talk
-        #new_talks = itertools.ifilter(is_worthy_talk, new_talks)
+        new_talks = itertools.ifilter(is_worthy_talk, new_talks)
 
-        #for talk in new_talks:
-        #    print talk
-
-    #new_talks = itertools.islice(new_talks, 0, 4)
-
-    #talks_api.upload(new_talks)
-
-    #l = TalksList("Testing List Creation", managed_lists_type)
-    #talks_api._post_create_managed_list(l)
-
-    #old_talks, old_lists = talks_api.load_talks()
-    #talks_api.upload(source())
-
-    print "1"
-
-    #source = OxItems()
-
-    #for event in source():
-    #    print event
+        talks_api.upload(new_talks)
 
 try:
     if __name__ == "__main__":

@@ -2,15 +2,15 @@ from icalendar import Calendar
 import models
 from utils.parsing import local_tz
 import datetime
-from utils.nesting_exception import log_exception
+from utils.nesting_exception import log_exception, log_exception_via
 import logging
 from utils.url_load import url_opener
 
 logger = logging.getLogger(__name__)
 
-def load_ical(open, raw_hacks=[], master_list=None, lists=[]):
+def load_ical(opener, raw_hacks=[], master_list=None, lists=[], url_for_logging="unknown"):
     """ Utility method to load an ical file and yield the events within it """
-    with open() as stream:
+    with opener() as stream:
         text = stream.read()
         if text == "":
             # Stupid bug in Calendar parser, doesn't accept empty files.
@@ -40,15 +40,16 @@ def load_ical(open, raw_hacks=[], master_list=None, lists=[]):
                                        location=location, description=description,
                                        master_list=master_list, lists=lists)
             except Exception:
-                log_exception(logger, "Failed to create event")
+                log_exception_via(logger.warning, "Failed to create event from url %s" % url_for_logging)
 
 class ICalEventSource(object):
     """ An event source which reads ical data from a specified context manager """
     def __init__(self, url=None, name=None):
+        self.url = url
         self.opener = url_opener(url)
         self.master_list_name = name
 
     def __call__(self, list_manager):
         master_list = list_manager.get_or_create_managed_list_by_name(self.master_list_name)
-        return load_ical(self.opener, master_list=master_list, lists=[master_list])
+        return load_ical(self.opener, master_list=master_list, lists=[master_list], url_for_logging=self.url)
 

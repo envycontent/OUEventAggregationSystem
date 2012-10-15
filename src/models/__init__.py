@@ -64,7 +64,7 @@ def merge_talks_by_key(talks, old_talks, key_gen, combine_talks):
     return reduced_talks, old_talks_by_id.values()
 
 def standard_talk_key(talk):
-    return (unicode(talk.name), talk.start)
+    return (unicode(talk.name).lower(), talk.start)
 
 def first_non_none(items, key):
     for item in items:
