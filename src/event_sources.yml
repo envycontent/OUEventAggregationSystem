@@ -45,6 +45,8 @@ sources:
   - type: ical
     name: Mathematical Institute Seminars
     url: http://www.maths.ox.ac.uk/events/calendar/2012-10/all/all/ical
-     
-     
+
+  - type: ical
+    name: Department of Computer Science
+    url: http://www.cs.ox.ac.uk/feeds/SeminarSeries-All.ics
      
