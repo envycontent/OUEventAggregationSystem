@@ -1,18 +1,13 @@
-from yaml import load, dump
+from yaml import load
 from bunch import bunchify
 import sources as sources_package
-from sources.ical_event_source import ICalEventSource
+from sources import ical_event_source, oxford_university_whatson, oxitems, rss_event_source
+from utils import find_thing
 
-def _find_class(class_name):
-    type_search = sources_package
-    for component in class_name.split("."):
-        type_search = getattr(type_search, component)
-    return type_search
+_types = dict(ical=ical_event_source.ICalEventSource)
 
-_types = dict(ical=ICalEventSource)
-
-def create_sources():
-    sources_dict = bunchify(load(file("../event_sources.yml")))
+def load_sources(filename):
+    sources_dict = bunchify(load(file(filename)))
 
     sources = []
 
@@ -22,8 +17,8 @@ def create_sources():
             class_of_source = _types[type_of_source]
         else:
             class_name = source_dict.pop("class", None)
-            class_of_source = _find_class(class_name)
+            class_of_source = find_thing(class_name, sources_package)
 
-        sources.append(class_of_source(**source_dict))
+        sources.append(class_of_source.create(**source_dict))
 
     return sources

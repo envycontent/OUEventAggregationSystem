@@ -55,6 +55,13 @@ def trim_event_name(event):
     else:
         return event
 
+class AddEvent(object):
+    def __init__(self, event):
+        self.event = event
+
+class DeleteOutstanding(object):
+    pass
+
 class OxTalksAPI(object):
 
     def __init__(self, host, username, password):
@@ -63,9 +70,17 @@ class OxTalksAPI(object):
         self.username = username
         self.auth = (username, password)
 
-    def upload(self, talks):
+    def upload(self, instructions):
         if self.old_talks is None:
             raise OxTalksAPIException("Talks not loaded")
+
+        talks = []
+        delete_outstanding = False
+        for instruction in instructions:
+            if isinstance(instruction, AddEvent):
+                talks.append(instruction.event)
+            if isinstance(instruction, DeleteOutstanding):
+                delete_outstanding = True
 
         talks = itertools.imap(trim_event_name, talks)
 
@@ -77,8 +92,9 @@ class OxTalksAPI(object):
                     list.id = self._post_create_managed_list(list)
             self._post_update_talk(new_talk)
 
-        for talk in old_redundant_talks:
-            self._delete_talk(talk)
+        if delete_outstanding:
+            for talk in old_redundant_talks:
+                self._delete_talk(talk)
 
     def _post_update_talk(self, talk):
         url = 'http://%s/talk/update/' % self.host
@@ -136,18 +152,17 @@ class OxTalksAPI(object):
         return talks, list_manager
 
     def _load_talks(self):
-        #talks_url = "http://%s/show/xml/4032" % self.host
-        #with open("/home/richard/oxford-talks/all") as f:
-        asd = None
-        with url_open("http://%s/show/xml/all_future_managed_talks" % self.host) as f:
-            asd = f.read()
-        with url_open("http://%s/show/xml/all_future_managed_talks" % self.host) as f:
-            root = etree.parse(f)
-            lists_manager = TalksListManager()
-            result = []
-            for talk in root.xpath("/list/talk"):
-                result.append(self._convert_xml_to_talk(talk, lists_manager))
-            return result, lists_manager
+        url = "http://%s/show/xml/all_future_managed_talks" % self.host
+        try:
+            with url_open(url) as f:
+                root = etree.parse(f)
+                lists_manager = TalksListManager()
+                result = []
+                for talk in root.xpath("/list/talk"):
+                    result.append(self._convert_xml_to_talk(talk, lists_manager))
+                return result, lists_manager
+        except Exception:
+            raise OxTalksAPIException("Failed to load events from %s" % url)
 
     def _convert_xml_to_talk(self, talk_root, list_manager):
         name = safe(lambda: unicode(html_unescape(talk_root.xpath("title/text()")[0])))

@@ -1,0 +1,6 @@
+oxtalks:
+  hostname: talks-ox-dev.nsms.ox.ac.uk
+  username: richard
+  password: richard
+logging_config_filename: ../settings/logging.yml
+sources_filename: ../settings/event_sources.yml

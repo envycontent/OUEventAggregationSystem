@@ -1,0 +1,44 @@
+version: 1
+
+formatters:
+  standard:
+    format: |-
+      -- %(levelname)s:%(asctime)s:%(name)s --
+      %(message)s
+    datefmt: '%Y-%m-%d %H:%M:%S'
+    
+handlers:
+  email_errors:
+# Currently points at file, until we get error emails set up
+    class: logging.handlers.RotatingFileHandler
+    formatter: standard
+    level: ERROR
+    filename: "../../log/errors.log"
+  comprehensive:
+# For all logging that isn't important enough to email
+    class: logging.handlers.RotatingFileHandler
+    formatter: standard
+    level: INFO
+    filename: "../../log/aggregator.log"
+  console:
+# For debugging purposes
+    class: logging.StreamHandler
+    formatter: standard
+    level: DEBUG
+  aggregation_summary:
+# For logging the summary statistics at the end of each run. Would like this to be emailed too at some stage
+    class: logging.handlers.RotatingFileHandler
+    formatter: standard
+    level: INFO
+    filename: "../../log/summary.log"    
+
+loggers:
+  OUEAS:
+    level: DEBUG
+  OUEAS.AggregationSummary:
+    level: INFO
+    handlers: [aggregation_summary]
+
+root:
+  level: DEBUG
+  handlers: [email_errors, comprehensive, console]

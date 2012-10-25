@@ -2,8 +2,9 @@ from sources.ical_event_source import load_ical
 from utils.url_load import load_soup, url_opener
 from utils.nesting_exception import log_exception, log_exception_via
 import logging
+from main.main_logging import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 class OxItems(object):
     """ Loads all events in the OxItems system 
@@ -18,6 +19,10 @@ class OxItems(object):
 
     url = "http://rss.oucs.ox.ac.uk/oxitems/generateicalendar1.php"
     feed_url = "http://rss.oucs.ox.ac.uk/oxitems/events.ics?channel_name=%s"
+
+    @classmethod
+    def create(cls):
+        return OxItems()
 
     def __call__(self, list_manager):
         oxitems_list = list_manager.get_or_create_managed_list_by_name("OxItems")

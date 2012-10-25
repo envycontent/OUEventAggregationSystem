@@ -9,26 +9,37 @@ sources:
   - type: ical
     name: St Antony's College
     url: http://www.google.com/calendar/ical/it-support%40sant.ox.ac.uk/public/basic
+    raw_hacks:
+      - remove_all_CREATEDs
 
   - type: ical
     name: Oxford University Information Security and Privacy Programme
     url: http://www.google.com/calendar/ical/v100pqq0pa2liar2dlrl2ofu24%40group.calendar.google.com/public/basic.ics
+    raw_hacks:
+      - remove_all_CREATEDs
 
   - type: ical
     name: Oxford University Engineering Society
     url: http://www.google.com/calendar/ical/6au0blf8a44uh63ngfnt8v09g0%40group.calendar.google.com/public/basic.ics
+    raw_hacks:
+      - remove_all_CREATEDs
       
   - type: ical
     name: The Materials Society
     url: http://www.google.com/calendar/ical/materials.society%40studentclubs.ox.ac.uk/public/basic.ics
-     
-  - type: ical
-    name: Department of Politics and International Relations
-    url: http://www.politics.ox.ac.uk/index.php/eventlist.html?format=ical
+    raw_hacks:
+      - remove_all_CREATEDs
+ 
+#	This old link is broken    
+#  - type: ical
+#    name: Department of Politics and International Relations
+#    url: http://www.politics.ox.ac.uk/index.php/eventlist.html?format=ical
      
   - type: ical
     name: Theology Faculty Seminars
     url: http://www.google.com/calendar/ical/theology.events%40googlemail.com/public/basic.ics
+    raw_hacks:
+      - remove_all_CREATEDs
      
   - type: ical
     name: Weatherall Institute of Molecular Medicine
@@ -37,10 +48,14 @@ sources:
   - type: ical
     name: Oxford Materials Seminars
     url: https://www.google.com/calendar/ical/oxfordmaterials%40gmail.com/private-c8aa75c0ec1978d9994214dbcbabf854/basic.ics
+    raw_hacks:
+      - remove_all_CREATEDs
      
   - type: ical
     name: Earth Sciences Seminars
     url: http://www.google.com/calendar/ical/6rde7u7ats30ajc4oq7850sbrc%40group.calendar.google.com/public/basic.ics
+    raw_hacks:
+      - remove_all_CREATEDs
   
   - type: ical
     name: Mathematical Institute Seminars
@@ -49,6 +64,8 @@ sources:
   - type: ical
     name: Interesting Talks Oxford
     url: https://www.google.com/calendar/ical/interestingtalksoxford%40gmail.com/public/basic.ics
+    raw_hacks:
+      - remove_all_CREATEDs
      
   - type: ical
     name: Oxford Uehiro Centre for Practical Ethics

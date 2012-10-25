@@ -5,8 +5,12 @@ import datetime
 from utils.nesting_exception import log_exception, log_exception_via
 import logging
 from utils.url_load import url_opener
+from main.main_logging import get_logger
+import re
+from utils import find_thing
+import sys
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 def load_ical(opener, raw_hacks=[], master_list=None, lists=[], url_for_logging="unknown"):
     """ Utility method to load an ical file and yield the events within it """
@@ -19,7 +23,7 @@ def load_ical(opener, raw_hacks=[], master_list=None, lists=[], url_for_logging=
         for raw_hack in raw_hacks:
             text = raw_hack(text)
 
-        calendar = Calendar.from_string(text)
+        calendar = Calendar.from_ical(text)
 
         for component in calendar.walk('VEVENT'):
             try:
@@ -42,14 +46,26 @@ def load_ical(opener, raw_hacks=[], master_list=None, lists=[], url_for_logging=
             except Exception:
                 log_exception_via(logger.warning, "Failed to create event from url %s" % url_for_logging)
 
+def remove_all_CREATEDs(text):
+    """ Very common problem with google ical, events have CREATED dates in the year 0, 
+    which confuses the parser (which it shouldn't really) """
+    return re.sub("CREATED.*?\n", "", text)
+
 class ICalEventSource(object):
-    """ An event source which reads ical data from a specified context manager """
-    def __init__(self, url=None, name=None):
-        self.url = url
-        self.opener = url_opener(url)
-        self.master_list_name = name
+    """ An event source which reads ical data from a specified opener """
+    def __init__(self, opener, url_for_logging, master_list_name, raw_hacks):
+        self.opener = opener
+        self.url_for_logging = url_for_logging
+        self.master_list_name = master_list_name
+        self.raw_hacks = raw_hacks
+
+    @classmethod
+    def create(cls, url=None, name=None, raw_hacks=[]):
+        return ICalEventSource(url_opener(url), url, name, [find_thing(raw_hack_name, sys.modules[__name__]) for raw_hack_name in raw_hacks])
 
     def __call__(self, list_manager):
         master_list = list_manager.get_or_create_managed_list_by_name(self.master_list_name)
-        return load_ical(self.opener, master_list=master_list, lists=[master_list], url_for_logging=self.url)
+        return load_ical(self.opener, master_list=master_list, lists=[master_list], url_for_logging=self.url_for_logging, raw_hacks=self.raw_hacks)
 
+    def __str__(self):
+        return "ICal<%s>" % self.master_list_name

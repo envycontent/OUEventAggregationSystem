@@ -12,6 +12,10 @@ class EventRSSSource(object):
     def __init__(self, url=None):
         self.loader = url
 
+    @classmethod
+    def create(cls, url):
+        return EventRSSSource(url)
+
     def __call__(self, list_manager):
         feed = feedparser.parse(self.loader)
         master_list = list_manager.get_or_create_managed_list_by_name(feed.feed.title_detail.value)

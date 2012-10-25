@@ -1,0 +1,5 @@
+icalendar
+futures
+feedparser
+BeautifulSoup
+lxml

@@ -5,10 +5,11 @@ from utils.parsing import render_html_text, local_tz
 import logging
 import pytz
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from main.main_logging import get_logger
 
 url = "http://www.ox.ac.uk/applications/dynamic/index.rm?filter_type=all&count=9999&id=55"
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 def munge_dst(datetime):
     """ Fixes bug in What's on Page, where ical files contain incorrect timezone info """
@@ -54,8 +55,12 @@ def load_events(event_page_url, master_list, lists):
 
 
 class WhatsOn(object):
+    @classmethod
+    def create(cls):
+        return WhatsOn()
+
     def __call__(self, list_manager):
-        with ThreadPoolExecutor(max_workers=4) as executor:
+        with ThreadPoolExecutor(max_workers=8) as executor:
             waiting_futures = []
             master_list = list_manager.get_or_create_managed_list_by_name("Oxford University What's On")
 
