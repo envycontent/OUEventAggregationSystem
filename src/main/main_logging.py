@@ -1,7 +1,6 @@
 import logging
 import logging.config
 from logging import handlers
-from yaml import load
 from settings import SettingsError
 
 _base_logger_name = "OUEAS"
@@ -15,6 +14,6 @@ aggregator_summary_logger = get_logger("AggregationSummary")
 
 def load_pull_events_logging(filename):
     try:
-        logging.config.dictConfig(load(file(filename)))
+        logging.config.fileConfig(filename)
     except Exception:
         raise SettingsError("Failed to load logging configuration from %s" % filename)
