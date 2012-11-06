@@ -91,9 +91,11 @@ def pull_events(settings_filename):
 try:
     if __name__ == "__main__":
         parser = OptionParser()
-        parser.add_option("-s", "--settings_file", dest="settings_filename",
-                          help="location of settings file", metavar="FILE")
-        (options, args) = parser.parse_args()
+        # parser.add_option("-s", "--settings_file", dest="settings_filename",
+        #                  help="location of settings file", metavar="FILE")
+        (options, positional_args) = parser.parse_args()
+
+        options.settings_filename, = positional_args
 
         pull_events(settings_filename=options.settings_filename)
 except:

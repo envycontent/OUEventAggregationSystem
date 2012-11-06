@@ -1,5 +1,13 @@
+apt-get install:
+python-concurrent.futures
+python-beautifulsoup
+python-lxml
+python-tz
+python-yaml
+python-requests
+python-feedparser
+
+pip install:
 icalendar
-futures
+bunch
 feedparser
-BeautifulSoup
-lxml

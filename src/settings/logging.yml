@@ -2,7 +2,8 @@
 keys=standard
 
 [formatter_standard]
-format=-- %(levelname)s:%(asctime)s:%(name)s -- %(message)s
+format=-- %(levelname)s:%(asctime)s:%(name)s --
+    %(message)s
 datefmt='%Y-%m-%d %H:%M:%S'
     
 [handlers]
@@ -13,33 +14,36 @@ keys=email_errors, comprehensive, console, aggregation_summary
 class=logging.handlers.RotatingFileHandler
 formatter=standard
 level=ERROR
-filename="../../log/errors.log"
+args=("../../log/errors.log",)
   
 [handler_comprehensive]
 # For all logging that isn't important enough to email
 class=logging.handlers.RotatingFileHandler
 formatter=standard
 level=INFO
-filename="../../log/aggregator.log"
+args=("../../log/aggregator.log",)
   
 [handler_console]
 # For debugging purposes
 class=logging.StreamHandler
 formatter=standard
 level=DEBUG
+args=(sys.stdout,)
 
 [handler_aggregation_summary]
 # For logging the summary statistics at the end of each run. Would like this to be emailed too at some stage
 class=logging.handlers.RotatingFileHandler
 formatter=standard
 level=INFO
-filename="../../log/summary.log"    
+args=("../../log/summary.log",)    
 
 [loggers]
 keys=root,OUEAS, AggregationSummary
 
 [logger_OUEAS]
 level=DEBUG
+# Uses the root logger instead.
+handlers=
 qualname=OUEAS
 parent=(root)
 

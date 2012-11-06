@@ -1,0 +1,7 @@
+apt-get install futures
+python-beautifulsoup
+python-lxml
+python-tz
+
+pip install icalendar
+feedparser
