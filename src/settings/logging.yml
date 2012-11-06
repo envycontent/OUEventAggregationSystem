@@ -1,44 +1,54 @@
-version: 1
+[formatters]
+keys=standard
 
-formatters:
-  standard:
-    format: |-
-      -- %(levelname)s:%(asctime)s:%(name)s --
-      %(message)s
-    datefmt: '%Y-%m-%d %H:%M:%S'
+[formatter_standard]
+format=-- %(levelname)s:%(asctime)s:%(name)s -- %(message)s
+datefmt='%Y-%m-%d %H:%M:%S'
     
-handlers:
-  email_errors:
+[handlers]
+keys=email_errors, comprehensive, console, aggregation_summary
+
+[handler_email_errors]
 # Currently points at file, until we get error emails set up
-    class: logging.handlers.RotatingFileHandler
-    formatter: standard
-    level: ERROR
-    filename: "../../log/errors.log"
-  comprehensive:
+class=logging.handlers.RotatingFileHandler
+formatter=standard
+level=ERROR
+filename="../../log/errors.log"
+  
+[handler_comprehensive]
 # For all logging that isn't important enough to email
-    class: logging.handlers.RotatingFileHandler
-    formatter: standard
-    level: INFO
-    filename: "../../log/aggregator.log"
-  console:
+class=logging.handlers.RotatingFileHandler
+formatter=standard
+level=INFO
+filename="../../log/aggregator.log"
+  
+[handler_console]
 # For debugging purposes
-    class: logging.StreamHandler
-    formatter: standard
-    level: DEBUG
-  aggregation_summary:
+class=logging.StreamHandler
+formatter=standard
+level=DEBUG
+
+[handler_aggregation_summary]
 # For logging the summary statistics at the end of each run. Would like this to be emailed too at some stage
-    class: logging.handlers.RotatingFileHandler
-    formatter: standard
-    level: INFO
-    filename: "../../log/summary.log"    
+class=logging.handlers.RotatingFileHandler
+formatter=standard
+level=INFO
+filename="../../log/summary.log"    
 
-loggers:
-  OUEAS:
-    level: DEBUG
-  OUEAS.AggregationSummary:
-    level: INFO
-    handlers: [aggregation_summary]
+[loggers]
+keys=root,OUEAS, AggregationSummary
 
-root:
-  level: DEBUG
-  handlers: [email_errors, comprehensive, console]
+[logger_OUEAS]
+level=DEBUG
+qualname=OUEAS
+parent=(root)
+
+[logger_AggregationSummary]
+level=INFO
+handlers=aggregation_summary
+qualname=OUEAS.AggregationSummary
+parent=OUEAS
+
+[logger_root]
+level=DEBUG
+handlers=email_errors, comprehensive, console
