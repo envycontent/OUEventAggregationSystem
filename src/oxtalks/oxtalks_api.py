@@ -26,8 +26,8 @@ def safe_unpack(l):
     else:
         return l[0]
 
-def safe_str(o):
-    return str(o) if o is not None else ""
+def safe_unicode(o):
+    return unicode(o) if o is not None else ""
 
 def safe(func, error=Exception, default=""):
     try:
@@ -165,34 +165,43 @@ class OxTalksAPI(object):
             raise OxTalksAPIException("Failed to load events from %s" % url)
 
     def _convert_xml_to_talk(self, talk_root, list_manager):
-        name = safe(lambda: unicode(html_unescape(talk_root.xpath("title/text()")[0])))
         id, = talk_root.xpath("id/text()")
-        id = int(id)
-        description = safe(lambda: unicode(html_unescape(talk_root.xpath("abstract/text()")[0])))
-        speaker = safe(lambda: unicode(html_unescape(talk_root.xpath("speaker/text()")[0])))
-        location = safe(lambda: unicode(html_unescape(talk_root.xpath("venue/text()")[0])))
-        start, = talk_root.xpath("start_time/text()")
-        start = dateutil.parser.parse(start)
-        end, = talk_root.xpath("end_time/text()")
-        end = dateutil.parser.parse(end)
-
-        lists = []
-        for list in talk_root.xpath("list"):
-            list_id, = list.xpath("id/text()")
-            list_id = int(list_id)
-            list_name, = list.xpath("name/text()")
-            list_name = safe_str(list_name)
-            list_type = list.xpath("list_type/text()")
-            if len(list_type) > 0:
-                list_type = safe_str(list_type[0])
+        try:
+            name = safe(lambda: unicode(html_unescape(talk_root.xpath("title/text()")[0])))
+            id = int(id)
+            description = safe(lambda: unicode(html_unescape(talk_root.xpath("abstract/text()")[0])))
+            speaker = safe(lambda: unicode(html_unescape(talk_root.xpath("speaker/text()")[0])))
+            location = safe(lambda: unicode(html_unescape(talk_root.xpath("venue/text()")[0])))
+            start, = talk_root.xpath("start_time/text()")
+            start = dateutil.parser.parse(start)
+            end, = talk_root.xpath("end_time/text()")
+            end = dateutil.parser.parse(end)
+    
+            lists = []
+            for list in talk_root.xpath("list"):
+                list_id, = list.xpath("id/text()")
+                try:
+                    list_id = int(list_id)
+                    list_name, = list.xpath("name/text()")
+                    list_name = safe_unicode(list_name)
+                    list_type = list.xpath("list_type/text()")
+                    if len(list_type) > 0:
+                        list_type = safe_unicode(list_type[0])
+                    else:
+                        list_type = ""
+                    lists.append(list_manager.get_or_create_list_by_id(list_id, list_name, list_type))
+                except Exception:
+                    raise OxTalksAPIException("Failed to parse list %s" % list_id)
+    
+            master_list_id, = talk_root.xpath("series/text()")
+            master_list_id = int(master_list_id)
+            master_list = list_manager.get_list_by_id(master_list_id)
+            if master_list is None:
+                raise OxTalksAPIException("Master List isn't known about yet")
+        except Exception as e:
+            if isinstance(e, OxTalksAPIException):
+                raise
             else:
-                list_type = ""
-            lists.append(list_manager.get_or_create_list_by_id(list_id, list_name, list_type))
-
-        master_list_id, = talk_root.xpath("series/text()")
-        master_list_id = int(master_list_id)
-        master_list = list_manager.get_list_by_id(master_list_id)
-        if master_list is None:
-            raise OxTalksAPIException("Master List isn't known about yet")
+                raise OxTalksAPIException("Failed to parse talk with id %s" % id)
 
         return Event(name, description, start, end, location, speaker, lists, master_list, id=id)
