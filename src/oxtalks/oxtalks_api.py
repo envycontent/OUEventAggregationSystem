@@ -116,7 +116,7 @@ class OxTalksAPI(object):
         for l in talk.lists:
             data.append(("talk[list_id_strings][]", str(l.id)))
 
-        response = requests.post(url, data, auth=self.auth)
+        response = requests.post(url, data, auth=self.auth, allow_redirects=True)
         if response.status_code != 200:
             raise OxTalksAPIException("Failed to create talk %s\nPost was %s" % (talk, data), response.content)
 
@@ -125,7 +125,7 @@ class OxTalksAPI(object):
 
         print "DELETE %s" % url
 
-        response = requests.post(url, auth=self.auth)
+        response = requests.post(url, auth=self.auth, allow_redirects=True)
         if response.status_code != 200:
             raise OxTalksAPIException("Failed to delete talk %s" % talk, response.content)
 
@@ -136,7 +136,7 @@ class OxTalksAPI(object):
         print "POST %s" % url
         data = {"list[name]":managed_list.name,
                 "list[list_type]":managed_list.list_type}
-        response = requests.post(url, data, auth=self.auth)
+        response = requests.post(url, data, auth=self.auth, allow_redirects=True)
         if response.status_code != 200:
             raise OxTalksAPIException("Failed to create managed list %s" % managed_list.name, response.content)
         else:
