@@ -1,5 +1,6 @@
 sources:
   - class: rss_event_source.EventRSSSource
+    name: "Oxford Internet Institute"
     url: http://www.oii.ox.ac.uk/events/feed/
 
   - class: oxitems.OxItems
@@ -63,6 +64,7 @@ sources:
      
   - type: ical
     name: Interesting Talks Oxford
+    description: The google calendar for the Interesting Talks group on facebook:https://www.facebook.com/oxfordtalks
     url: https://www.google.com/calendar/ical/interestingtalksoxford%40gmail.com/public/basic.ics
     raw_hacks:
       - remove_all_CREATEDs

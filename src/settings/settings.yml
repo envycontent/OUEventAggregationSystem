@@ -1,5 +1,5 @@
 oxtalks:
-  hostname: talks-ox-dev.nsms.ox.ac.uk
+  hostname: localhost:3000
   username: richard.hills@gmail.com
   password: richard
 logging_config_filename: ../settings/logging.yml

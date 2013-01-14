@@ -20,6 +20,9 @@ class OxItems(object):
     url = "http://rss.oucs.ox.ac.uk/oxitems/generateicalendar1.php"
     feed_url = "http://rss.oucs.ox.ac.uk/oxitems/events.ics?channel_name=%s"
 
+    name = "OxItems"
+    description = "Trawls events from http://rss.oucs.ox.ac.uk/oxitems/generateicalendar1.php"
+
     @classmethod
     def create(cls):
         return OxItems()

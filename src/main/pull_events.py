@@ -1,102 +1,103 @@
-from utils.nesting_exception import log_exception
-from oxtalks.oxtalks_api import OxTalksAPI, DeleteOutstanding, AddEvent
-from models import is_worthy_talk
-import itertools
-from sources.source_factory import load_sources
-from concurrent.futures import ThreadPoolExecutor
-from main.main_logging import get_logger, aggregator_summary_logger, load_pull_events_logging
 from Queue import Queue
-from utils.queues import close_queue, queue_yielder
-import time
-from sources.oxford_university_whatson import WhatsOn
-import threading
-from sources.ical_event_source import ICalEventSource
+from concurrent.futures import ThreadPoolExecutor, Future
+from main.main_logging import get_logger, aggregator_summary_logger, \
+    load_main_logging
+from models import is_worthy_talk
 from optparse import OptionParser
-import logging
+from oxtalks.oxtalks_api import OxTalksAPI, DeleteOutstanding, AddEvent
 from settings import load_settings
+from sources.ical_event_source import ICalEventSource
+from sources.oxford_university_whatson import WhatsOn
+from sources.source_factory import load_sources
+from utils.nesting_exception import log_exception
+from utils.queues import close_queue, queue_yielder
+import itertools
+import logging
+import threading
+import time
 
 # Until we load logging information from our configuration file
 logging.basicConfig()
 
 logger = get_logger("pull_events")
 
-def _load_talks_from_source(source, list_manager, instructions_queue):
-    number_of_events_loaded = 0
+def _load_talks_from_source(source, list_manager):
     started = time.time()
     succeeded = True
+    new_instructions = []
     try:
         logger.info("Loading events from %s" % source)
         for event in source(list_manager):
-            instructions_queue.put(AddEvent(event))
-            number_of_events_loaded = number_of_events_loaded + 1
+            new_instructions.append(AddEvent(event))
         logger.info("Finished loading events from %s" % source)
-        return True
+        return new_instructions, True
     except Exception:
         log_exception(logger, "Failed to load from source %s" % source)
         succeeded = False
-        return False
+        # Return as many events as we were able to fetch. Maybe should return [] ?
+        return new_instructions, False
     finally:
-        aggregator_summary_logger.info("Source %s finished %s. It took %i to return %i events" % (source, "successfully" if succeeded else "unsuccessfully", time.time() - started, number_of_events_loaded))
+        aggregator_summary_logger.info("Source %s finished %s. It took %i to return %i events" % (source, "successfully" if succeeded else "unsuccessfully", time.time() - started, len(new_instructions)))
 
-def _upload_talks(api, instructions):
-    try:
-        api.upload(instructions)
-    except:
-        log_exception(logger, "Failed to upload events to OxTalks")
+def list_trawlers(options, settings):
+    for source in load_sources(settings.sources_filename):
+        print source.name
+        description = getattr(source, "description", None)
+        print "\t%s" % (description if description is not None else "No description available")
+        print
 
-def pull_events(settings_filename):
-    settings = load_settings(settings_filename)
-    load_pull_events_logging(settings.logging_config_filename)
-
+def pull_events(options, settings):
+    aggregator_summary_logger.info("Starting pull_events")
     talks_api = OxTalksAPI(settings.oxtalks_hostname, settings.oxtalks_username,
                            settings.oxtalks_password)
     talks, list_manager = talks_api.load_talks()
-    instructions_queue = Queue()
 
-    source_futures = []
-    upload_future = None
+    sources = load_sources(settings.sources_filename)
+    single_trawler_to_run = getattr(options, "trawler", None)
+    if single_trawler_to_run is not None:
+        sources = filter(lambda source: source.name == single_trawler_to_run, sources)
+        if len(sources) == 0:
+            raise ValueError("Could not find trawler named %s, use --list_trawlers to see all those in the system" % single_trawler_to_run)
+    all_instructions = []
+    all_succeeded = True
 
-    # We load events on a series of worker threads, while another thread
-    # uploads the events onto OxTalks.
+    # Make use of threadpoolexecutor to run all sources on different threads.
+    with ThreadPoolExecutor(max_workers=10) as sources_executor:
+        source_results = []
+        for source in sources:
+            source_results.append(sources_executor.submit(_load_talks_from_source, source, list_manager))
+        for new_instructions, succeeded in map(Future.result, source_results):
+            all_instructions.extend(new_instructions)
+            all_succeeded = all_succeeded and succeeded            
 
-    # 'with' statement blocks on Executors until all outstanding jobs are
-    # complete.
-    with ThreadPoolExecutor(max_workers=1) as upload_executor:
-        try:
-            # Start our upload events task. It loads events from the instruction_queue
-            # Set up filters for boring events
-            new_instructions = itertools.ifilter(lambda instruction: not isinstance(instruction, AddEvent) or is_worthy_talk(instruction.event),
-                                                 queue_yielder(instructions_queue))
-            upload_future = upload_executor.submit(_upload_talks, talks_api, new_instructions)
+    # Remove dull events
+    all_instructions = filter(lambda instruction: not isinstance(instruction, AddEvent) or is_worthy_talk(instruction.event),
+                              all_instructions)
+            
+    if all_succeeded and single_trawler_to_run is None:
+        all_instructions.append(DeleteOutstanding())
 
-            with ThreadPoolExecutor(max_workers=3) as source_executor:
-                # Start running our various event sources
-                for source in load_sources(settings.sources_filename):
-                    source_futures.append(source_executor.submit(_load_talks_from_source, source, list_manager, instructions_queue))
-            # All the sources will now have finished running
-            all_sources_succeeded = True
-            for source_future in source_futures:
-                if not source_future.result():
-                    all_sources_succeeded = False
-            if all_sources_succeeded:
-                instructions_queue.put(DeleteOutstanding())
-        finally:
-            # Closing the queue terminates the upload job
-            close_queue(instructions_queue)
-
-        # Force any exception from the uploader to be thrown.
-        if upload_future is not None:
-            upload_future.result()
+    try:
+        talks_api.upload(all_instructions)
+    except:
+        log_exception(logger, "Failed to upload events to OxTalks")
 
 try:
     if __name__ == "__main__":
         parser = OptionParser()
-        # parser.add_option("-s", "--settings_file", dest="settings_filename",
-        #                  help="location of settings file", metavar="FILE")
+        parser.add_option("-t", "--trawler", dest="trawler",
+                         help="name of trawler to run")
+        parser.add_option("-l", "--list", dest="list_trawlers",
+                         action='store_true', help="list names of available trawlers")
         (options, positional_args) = parser.parse_args()
-
         options.settings_filename, = positional_args
 
-        pull_events(settings_filename=options.settings_filename)
+        settings = load_settings(options.settings_filename)
+        load_main_logging(settings.logging_config_filename)
+        
+        if options.list_trawlers:
+            list_trawlers(options, settings)
+        else:            
+            pull_events(options, settings)
 except:
     log_exception(logger, "Unrecoverable Error")

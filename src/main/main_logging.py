@@ -7,12 +7,11 @@ _base_logger_name = "OUEAS"
 
 def get_logger(class_name):
     logger_name = "%s.%s" % (_base_logger_name, class_name)
-    print logger_name
     return logging.getLogger(logger_name)
 
 aggregator_summary_logger = get_logger("AggregationSummary")
 
-def load_pull_events_logging(filename):
+def load_main_logging(filename):
     try:
         logging.config.fileConfig(filename)
     except Exception:

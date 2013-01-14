@@ -35,7 +35,7 @@ def load_events(event_page_url, master_list, lists):
         event_page_soup = load_soup(url_opener(event_page_url))
         description_nodes = event_page_soup.xpath("//div[@class='description']")
         if len(description_nodes) > 0:
-            description_node, = description_nodes
+            description_node = description_nodes[0]
             description = render_html_text(description_node)
         else:
             description = ""
@@ -55,6 +55,9 @@ def load_events(event_page_url, master_list, lists):
 
 
 class WhatsOn(object):
+    name = "Oxford University What's On"
+    description = "The Oxford University What's On pages: http://www.ox.ac.uk/visitors_friends/whats_on/index.html"
+    
     @classmethod
     def create(cls):
         return WhatsOn()

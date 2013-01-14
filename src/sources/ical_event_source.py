@@ -53,15 +53,18 @@ def remove_all_CREATEDs(text):
 
 class ICalEventSource(object):
     """ An event source which reads ical data from a specified opener """
-    def __init__(self, opener, url_for_logging, master_list_name, raw_hacks):
+    def __init__(self, opener, url_for_logging, master_list_name, name, description, raw_hacks):
         self.opener = opener
         self.url_for_logging = url_for_logging
         self.master_list_name = master_list_name
         self.raw_hacks = raw_hacks
+        self.name = name
+        self.description = description
 
     @classmethod
-    def create(cls, url=None, name=None, raw_hacks=[]):
-        return ICalEventSource(url_opener(url), url, name, [find_thing(raw_hack_name, sys.modules[__name__]) for raw_hack_name in raw_hacks])
+    def create(cls, url=None, name=None, raw_hacks=[], description=None):
+        return ICalEventSource(url_opener(url), url, name, name, description,
+                               [find_thing(raw_hack_name, sys.modules[__name__]) for raw_hack_name in raw_hacks])
 
     def __call__(self, list_manager):
         master_list = list_manager.get_or_create_managed_list_by_name(self.master_list_name)
