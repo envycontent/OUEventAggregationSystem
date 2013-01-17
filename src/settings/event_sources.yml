@@ -1,6 +1,6 @@
 sources:
   - class: rss_event_source.EventRSSSource
-    name: "Oxford Internet Institute"
+    name: Oxford Internet Institute
     url: http://www.oii.ox.ac.uk/events/feed/
 
   - class: oxitems.OxItems

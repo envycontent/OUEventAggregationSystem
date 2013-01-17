@@ -10,7 +10,6 @@ from sources.ical_event_source import ICalEventSource
 from sources.oxford_university_whatson import WhatsOn
 from sources.source_factory import load_sources
 from utils.nesting_exception import log_exception
-from utils.queues import close_queue, queue_yielder
 import itertools
 import logging
 import threading
