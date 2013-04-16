@@ -1,9 +1,10 @@
 from collections import defaultdict
-import itertools
-from utils import safe_len
-import datetime
-import pytz
 from threading import RLock
+from utils import safe_len
+from utils.parsing import convert_to_utc
+import datetime
+import itertools
+import pytz
 
 class Event(object):
     __slots__ = ["name", "description", "start", "end", "location", "speaker", "lists", "master_list", "id"]
@@ -15,6 +16,9 @@ class Event(object):
             raise ValueError()
         if getattr(end, "tzinfo", None) is None:
             raise ValueError()
+        
+        start, end = convert_to_utc(start, end)
+        
         self.name = name
         self.description = description
         self.start = start
@@ -33,7 +37,7 @@ class Event(object):
         return Event(**original)
 
     def __repr__(self):
-        return "Event<%s>" % (self.name)
+        return "Event<%s, %s, %s>" % (self.name, self.speaker, self.start)
 
 def is_worthy_talk(talk):
     return safe_len(talk.name) > 0 and talk.start is not None and talk.start > datetime.datetime.now(pytz.utc)

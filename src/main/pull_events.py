@@ -2,7 +2,7 @@ from Queue import Queue
 from concurrent.futures import ThreadPoolExecutor, Future
 from main.main_logging import get_logger, aggregator_summary_logger, \
     load_main_logging
-from models import is_worthy_talk
+from models import is_worthy_talk, TalksListManager
 from optparse import OptionParser
 from oxtalks.oxtalks_api import OxTalksAPI, DeleteOutstanding, AddEvent
 from settings import load_settings
@@ -49,7 +49,11 @@ def pull_events(options, settings):
     aggregator_summary_logger.info("Starting pull_events")
     talks_api = OxTalksAPI(settings.oxtalks_hostname, settings.oxtalks_username,
                            settings.oxtalks_password)
+    
+    # if not options.dry_run:
     talks, list_manager = talks_api.load_talks()
+    # else:
+    #    list_manager = TalksListManager()
 
     sources = load_sources(settings.sources_filename)
     single_trawler_to_run = getattr(options, "trawler", None)
@@ -76,10 +80,14 @@ def pull_events(options, settings):
     if all_succeeded and single_trawler_to_run is None:
         all_instructions.append(DeleteOutstanding())
 
-    try:
-        talks_api.upload(all_instructions)
-    except:
-        log_exception(logger, "Failed to upload events to OxTalks")
+    if options.dry_run:
+        for i in all_instructions:
+            print i
+    else:
+        try:
+            talks_api.upload(all_instructions)
+        except:
+            log_exception(logger, "Failed to upload events to OxTalks")
 
 try:
     if __name__ == "__main__":
@@ -88,6 +96,8 @@ try:
                          help="name of trawler to run")
         parser.add_option("-l", "--list", dest="list_trawlers",
                          action='store_true', help="list names of available trawlers")
+        parser.add_option("-d", "--dry_run", dest="dry_run",
+                         action='store_true', help="Dry run, don't upload to talks website")
         (options, positional_args) = parser.parse_args()
         options.settings_filename, = positional_args
 

@@ -1,23 +1,24 @@
 from lxml import etree
 from lxml.html import soupparser
+from main.main_logging import get_logger
 from models import Event, TalksListManager, managed_lists_type, \
     standard_combine_talks, standard_talk_key, merge_talks_by_key
 from sources.exceptions import OxTalksAPIException
 from sources.ical_event_source import load_ical
 from urllib2 import HTTPError
+from utils.parsing import local_tz, convert_to_utc
 from utils.url_load import url_opener, load_soup, url_open
 from xml.etree.ElementTree import Element, SubElement, tostring
+from xml.sax.saxutils import escape, unescape
+import StringIO
 import base64
 import dateutil.parser
+import itertools
+import pytz
 import requests
 import urllib
 import urllib2
 import urlparse
-import StringIO
-from xml.sax.saxutils import escape, unescape
-from utils.parsing import local_tz
-import itertools
-from main.main_logging import get_logger
 
 logger = get_logger("oxtalks_api")
 
@@ -61,6 +62,9 @@ def trim_event_name(event):
 class AddEvent(object):
     def __init__(self, event):
         self.event = event
+    
+    def __str__(self):
+        return str(self.event)
 
 class DeleteOutstanding(object):
     pass
@@ -138,6 +142,7 @@ class OxTalksAPI(object):
         url = 'http://%s/list/api_create' % self.host
         data = {"list[name]":managed_list.name,
                 "list[list_type]":managed_list.list_type}
+        logger.debug("CREATE LIST %s, %s" % (url, data))
         response = requests.post(url, data, auth=self.auth, allow_redirects=True)
         if response.status_code != 200:
             raise OxTalksAPIException("Failed to create managed list %s" % managed_list.name, response.content)
@@ -179,6 +184,8 @@ class OxTalksAPI(object):
             end, = talk_root.xpath("end_time/text()")
             end = dateutil.parser.parse(end)
     
+            start, end = convert_to_utc(start, end)
+            
             lists = []
             for list in talk_root.xpath("list"):
                 list_id, = list.xpath("id/text()")

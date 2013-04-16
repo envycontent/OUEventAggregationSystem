@@ -1,18 +1,23 @@
 from icalendar import Calendar
-import models
-from utils.parsing import local_tz
-import datetime
-from utils.nesting_exception import log_exception, log_exception_via
-import logging
-from utils.url_load import url_opener
 from main.main_logging import get_logger
-import re
 from utils import find_thing
+from utils.nesting_exception import log_exception, log_exception_via
+from utils.parsing import local_tz, de_list
+from utils.url_load import url_opener
+import datetime
+import logging
+import models
+import re
 import sys
 
 logger = get_logger(__name__)
 
-def load_ical(opener, raw_hacks=[], master_list=None, lists=[], url_for_logging="unknown"):
+def _standard_speaker_parser(component):
+    for possible_speaker in de_list(component.get("X-OXTALKS-SPEAKER")):
+        return str(possible_speaker)
+    return None
+
+def load_ical(opener, raw_hacks=[], master_list=None, lists=[], url_for_logging="unknown", speaker_parser=_standard_speaker_parser):
     """ Utility method to load an ical file and yield the events within it """
     with opener() as stream:
         text = stream.read()
@@ -32,6 +37,8 @@ def load_ical(opener, raw_hacks=[], master_list=None, lists=[], url_for_logging=
                 end = component.get("dtend").dt
                 location = component.get("location")
                 description = component.get("description")
+                speaker = speaker_parser(component)
+                
                 if not isinstance(start, datetime.datetime) or not isinstance(end, datetime.datetime):
                     continue
 
@@ -42,6 +49,7 @@ def load_ical(opener, raw_hacks=[], master_list=None, lists=[], url_for_logging=
                 if len(name) > 0:
                     yield models.Event(name=name, start=start, end=end,
                                        location=location, description=description,
+                                       speaker=speaker, 
                                        master_list=master_list, lists=lists)
             except Exception:
                 log_exception_via(logger.warning, "Failed to create event from url %s" % url_for_logging)

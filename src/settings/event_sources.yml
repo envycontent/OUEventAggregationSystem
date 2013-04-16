@@ -76,3 +76,13 @@ sources:
   - type: ical
     name: Department of Computer Science
     url: http://www.cs.ox.ac.uk/feeds/SeminarSeries-All.ics
+
+  - type: ical
+    name: Oxford-Man Institute
+    url: http://www.oxford-man.ox.ac.uk/event_ical.php
+
+  - type: ical
+    name: Skeptics in the pub
+    url: http://www.google.com/calendar/ical/9drec49n91k9rmqlk03jv8vd30%40group.calendar.google.com/public/basic.ics
+    raw_hacks:
+      - remove_all_CREATEDs

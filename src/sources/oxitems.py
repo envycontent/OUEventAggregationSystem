@@ -1,8 +1,9 @@
-from sources.ical_event_source import load_ical
-from utils.url_load import load_soup, url_opener
-from utils.nesting_exception import log_exception, log_exception_via
-import logging
 from main.main_logging import get_logger
+from sources.ical_event_source import load_ical
+from utils.nesting_exception import log_exception, log_exception_via
+from utils.parsing import de_list
+from utils.url_load import load_soup, url_opener
+import logging
 
 logger = get_logger(__name__)
 
@@ -26,6 +27,13 @@ class OxItems(object):
     @classmethod
     def create(cls):
         return OxItems()
+    
+    def _parse_speaker(self, component):
+        for possible_speaker in de_list(component.get("ATTENDEE")):
+            marker = "X-SPEAKER:"
+            return str(possible_speaker[len(marker):]) if possible_speaker.startswith(marker) else None
+
+        return None
 
     def __call__(self, list_manager):
         oxitems_list = list_manager.get_or_create_managed_list_by_name("OxItems")
@@ -38,7 +46,7 @@ class OxItems(object):
                     oxitems_feed_longname = oxitems_feed_longname[len(oxitems_feed_id) + 2:]
                     master_list = list_manager.get_or_create_managed_list_by_name(oxitems_feed_longname)
                     ical_url = OxItems.feed_url % oxitems_feed_id
-                    for event in load_ical(url_opener(ical_url),
+                    for event in load_ical(url_opener(ical_url), speaker_parser=self._parse_speaker,
                                            lists=[oxitems_list, master_list],
                                            master_list=list_manager.get_or_create_managed_list_by_name(oxitems_feed_longname)):
                         yield event
