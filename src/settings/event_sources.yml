@@ -86,3 +86,11 @@ sources:
     url: http://www.google.com/calendar/ical/9drec49n91k9rmqlk03jv8vd30%40group.calendar.google.com/public/basic.ics
     raw_hacks:
       - remove_all_CREATEDs
+      
+  - type: ical
+    name: Department of Physiology, Anatomy and Genetics
+    url: http://www.dpag.ox.ac.uk/about-us/seminars_events/seminars/trinityterm2013/ics_view
+
+  - type: ical
+    name: Weatherall Institute of Molecular Medicine
+    url: http://www.imm.ox.ac.uk/seminars/hiu_wednesday_seminars/ics_view

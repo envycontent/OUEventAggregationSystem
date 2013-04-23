@@ -22,6 +22,9 @@ import urlparse
 
 logger = get_logger("oxtalks_api")
 
+s = requests.session()
+s.config['keep_alive'] = False
+
 def safe_unpack(l):
     if len(l) == 0:
         return None

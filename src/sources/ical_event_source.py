@@ -22,6 +22,7 @@ def load_ical(opener, raw_hacks=[], master_list=None, lists=[], url_for_logging=
     with opener() as stream:
         text = stream.read()
         if text == "":
+            logger.debug("ical file from %s was empty" % url_for_logging)
             # Stupid bug in Calendar parser, doesn't accept empty files.
             return
 
@@ -49,7 +50,7 @@ def load_ical(opener, raw_hacks=[], master_list=None, lists=[], url_for_logging=
                 if len(name) > 0:
                     yield models.Event(name=name, start=start, end=end,
                                        location=location, description=description,
-                                       speaker=speaker, 
+                                       speaker=speaker,
                                        master_list=master_list, lists=lists)
             except Exception:
                 log_exception_via(logger.warning, "Failed to create event from url %s" % url_for_logging)
