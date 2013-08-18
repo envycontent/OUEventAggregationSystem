@@ -83,7 +83,7 @@ def pull_events(options, settings):
         if failed_trawler is None:
             all_instructions.append(DeleteOutstanding())
         else:
-            logger.warning("Since %s failed, we will not flush out stale "
+            logger.error("Since %s failed, we will not flush out stale "
                            "events, as we can't be sure it's not a temporary "
                            "failure" % failed_trawler.name)
 
