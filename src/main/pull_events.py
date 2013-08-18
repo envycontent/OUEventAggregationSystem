@@ -45,15 +45,13 @@ def list_trawlers(options, settings):
         print "\t%s" % (description if description is not None else "No description available")
         print
 
+
 def pull_events(options, settings):
     aggregator_summary_logger.info("Starting pull_events")
     talks_api = OxTalksAPI(settings.oxtalks_hostname, settings.oxtalks_username,
                            settings.oxtalks_password)
 
-    # if not options.dry_run:
     talks, list_manager = talks_api.load_talks()
-    # else:
-    #    list_manager = TalksListManager()
 
     sources = load_sources(settings.sources_filename)
     single_trawler_to_run = getattr(options, "trawler", None)
@@ -81,13 +79,16 @@ def pull_events(options, settings):
     all_instructions = filter(lambda instruction: not isinstance(instruction, AddEvent) or is_worthy_talk(instruction.event),
                               all_instructions)
 
-    if failed_trawler is not None and single_trawler_to_run is None:
-        logger.warning("Since %s failed, we will not flush out stale events, as we can't be sure it's not a temporary failure" % source.name)
-        all_instructions.append(DeleteOutstanding())
+    if single_trawler_to_run is None:
+        if failed_trawler is None:
+            all_instructions.append(DeleteOutstanding())
+        else:
+            logger.warning("Since %s failed, we will not flush out stale "
+                           "events, as we can't be sure it's not a temporary "
+                           "failure" % failed_trawler.name)
 
     if options.dry_run:
-        for i in all_instructions:
-            print i
+        talks_api.print_dry_run_output(all_instructions)
     else:
         try:
             talks_api.upload(all_instructions)

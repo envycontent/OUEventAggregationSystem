@@ -12,10 +12,12 @@ import sys
 
 logger = get_logger(__name__)
 
+
 def _standard_speaker_parser(component):
     for possible_speaker in de_list(component.get("X-OXTALKS-SPEAKER")):
         return str(possible_speaker)
     return None
+
 
 def load_ical(opener, raw_hacks=[], master_list=None, lists=[], url_for_logging="unknown", speaker_parser=_standard_speaker_parser):
     """ Utility method to load an ical file and yield the events within it """
@@ -39,7 +41,7 @@ def load_ical(opener, raw_hacks=[], master_list=None, lists=[], url_for_logging=
                 location = component.get("location")
                 description = component.get("description")
                 speaker = speaker_parser(component)
-                
+
                 if not isinstance(start, datetime.datetime) or not isinstance(end, datetime.datetime):
                     continue
 
@@ -55,10 +57,12 @@ def load_ical(opener, raw_hacks=[], master_list=None, lists=[], url_for_logging=
             except Exception:
                 log_exception_via(logger.warning, "Failed to create event from url %s" % url_for_logging)
 
+
 def remove_all_CREATEDs(text):
     """ Very common problem with google ical, events have CREATED dates in the year 0, 
     which confuses the parser (which it shouldn't really) """
     return re.sub("CREATED.*?\n", "", text)
+
 
 class ICalEventSource(object):
     """ An event source which reads ical data from a specified opener """
@@ -80,4 +84,4 @@ class ICalEventSource(object):
         return load_ical(self.opener, master_list=master_list, lists=[master_list], url_for_logging=self.url_for_logging, raw_hacks=self.raw_hacks)
 
     def __str__(self):
-        return "ICal<%s>" % self.master_list_name
+        return "ICal<%s, %s>" % (self.master_list_name, self.url_for_logging)

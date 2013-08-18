@@ -118,6 +118,8 @@ class TalksList(object):
     def __init__(self, name, list_type, id):
         if name is None:
             raise ValueError("Name can't be none")
+        if name == '':
+            raise ValueError("Name can't be \'\'")
         self.name = name
         self.list_type = list_type
         self.id = id

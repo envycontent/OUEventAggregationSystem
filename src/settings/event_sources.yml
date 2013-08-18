@@ -11,11 +11,12 @@ sources:
     name: IT Learning Programme
     url: http://courses.it.ox.ac.uk/courses.ics
 
-  - type: ical
-    name: St Antony's College
-    url: http://www.google.com/calendar/ical/it-support%40sant.ox.ac.uk/public/basic
-    raw_hacks:
-      - remove_all_CREATEDs
+#  Calendar seems to be broken
+#  - type: ical
+#    name: St Antony's College
+#    url: http://www.google.com/calendar/ical/it-support%40sant.ox.ac.uk/public/basic
+#    raw_hacks:
+#      - remove_all_CREATEDs
 
   - type: ical
     name: Oxford University Information Security and Privacy Programme
@@ -98,6 +99,7 @@ sources:
   - type: ical
     name: Weatherall Institute of Molecular Medicine
     url: http://www.imm.ox.ac.uk/seminars/hiu_wednesday_seminars/ics_view
-    
-  - class: daily_info.DailyInfo
+ 
+#  Not fully tested.    
+#  - class: daily_info.DailyInfo
   

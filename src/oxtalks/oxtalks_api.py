@@ -64,7 +64,7 @@ class AddEvent(object):
         self.event = event
 
     def __str__(self):
-        return str(self.event)
+        return "ADD: %s" % str(self.event)
 
 class DeleteOutstanding(object):
     pass
@@ -81,10 +81,7 @@ class OxTalksAPI(object):
     def _standard_post_parameters(self):
         return dict(auth=self.auth, allow_redirects=True, stream=False)
 
-    def upload(self, instructions):
-        if self.old_talks is None:
-            raise OxTalksAPIException("Talks not loaded")
-
+    def _interpret_instructions(self, instructions):
         talks = []
         delete_outstanding = False
         for instruction in instructions:
@@ -95,7 +92,26 @@ class OxTalksAPI(object):
 
         talks = itertools.imap(trim_event_name, talks)
 
-        new_talks, old_redundant_talks = merge_talks_by_key(talks, self.old_talks, standard_talk_key, standard_combine_talks)
+        new_talks, old_redundant_talks = self.divide_talks(talks)
+        return delete_outstanding, new_talks, old_redundant_talks
+
+    def print_dry_run_output(self, instructions):
+        delete_outstanding, new_talks, old_redundant_talks = self._interpret_instructions(instructions)
+
+        print "---- DRY RUN OUTPUT ----"
+        print "---- Instructions for OxTalks:"
+        for instruction in instructions:
+            print instruction
+        if delete_outstanding:
+            print "---- Delete outstanding talks:"
+            for old_redundant_talk in old_redundant_talks:
+                print old_redundant_talk
+
+    def upload(self, instructions):
+        if self.old_talks is None:
+            raise OxTalksAPIException("Talks not loaded")
+
+        delete_outstanding, new_talks, old_redundant_talks = self._interpret_instructions(instructions)
 
         for new_talk in new_talks.values():
             for list in new_talk.lists:
@@ -106,6 +122,9 @@ class OxTalksAPI(object):
         if delete_outstanding:
             for talk in old_redundant_talks:
                 self._delete_talk(talk)
+
+    def divide_talks(self, talks):
+        return merge_talks_by_key(talks, self.old_talks, standard_talk_key, standard_combine_talks)
 
     def _post_update_talk(self, talk):
         url = 'http://%s/talk/update/' % self.host
@@ -152,7 +171,7 @@ class OxTalksAPI(object):
         logger.debug("CREATE LIST %s, %s" % (url, data))
         response = requests.post(url, data, **self._standard_post_parameters)
         if response.status_code != 200:
-            raise OxTalksAPIException("Failed to create managed list %s" % managed_list.name, response.content)
+            raise OxTalksAPIException("Failed to create managed list %s" % (managed_list.name, response.content))
         else:
             try:
                 list_soup = soupparser.fromstring(response.content)
