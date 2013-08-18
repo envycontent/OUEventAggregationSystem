@@ -7,13 +7,18 @@ import re
 def url_opener(url):
     """ Given a url, returns a function that will load it, using a 
     context manager. You could do:
-    
+
     s = ICalEventSource(url_opener("http://www.medsci.ox.ac.uk/research/seminars/seminars-in-the-msd/ics_view")) """
-    return lambda: url_open(url)
+    def _open():
+        return url_open(url)
+    return _open
 
 @contextmanager
 def url_open(url):
-    yield urllib2.urlopen(url)
+    f = urllib2.urlopen(url)
+    if f.getcode() != 200:
+        raise ValueError("Received %s code from url %s" % (file.getcode(), url))
+    yield f
 
 def load_soup(open):
     """ From a context manager, loads a url and interprets it into a soup object,

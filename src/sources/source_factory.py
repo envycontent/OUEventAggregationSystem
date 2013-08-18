@@ -1,7 +1,7 @@
 from yaml import load
 from bunch import bunchify
 import sources as sources_package
-from sources import ical_event_source, oxford_university_whatson, oxitems, rss_event_source
+from sources import ical_event_source, oxford_university_whatson, oxitems, rss_event_source, daily_info
 from utils import find_thing
 from utils.nesting_exception import NestingException
 

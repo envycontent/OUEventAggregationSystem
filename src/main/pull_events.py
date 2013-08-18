@@ -49,7 +49,7 @@ def pull_events(options, settings):
     aggregator_summary_logger.info("Starting pull_events")
     talks_api = OxTalksAPI(settings.oxtalks_hostname, settings.oxtalks_username,
                            settings.oxtalks_password)
-    
+
     # if not options.dry_run:
     talks, list_manager = talks_api.load_talks()
     # else:
@@ -62,22 +62,27 @@ def pull_events(options, settings):
         if len(sources) == 0:
             raise ValueError("Could not find trawler named %s, use --list_trawlers to see all those in the system" % single_trawler_to_run)
     all_instructions = []
-    all_succeeded = True
+
+    failed_trawler = None
 
     # Make use of threadpoolexecutor to run all sources on different threads.
     with ThreadPoolExecutor(max_workers=10) as sources_executor:
         source_results = []
         for source in sources:
-            source_results.append(sources_executor.submit(_load_talks_from_source, source, list_manager))
-        for new_instructions, succeeded in map(Future.result, source_results):
+            future = sources_executor.submit(_load_talks_from_source, source, list_manager)
+            source_results.append((source, future))
+        for source, future in source_results:
+            new_instructions, succeeded = future.result()
             all_instructions.extend(new_instructions)
-            all_succeeded = all_succeeded and succeeded            
+            if not succeeded:
+                failed_trawler = source
 
     # Remove dull events
     all_instructions = filter(lambda instruction: not isinstance(instruction, AddEvent) or is_worthy_talk(instruction.event),
                               all_instructions)
-            
-    if all_succeeded and single_trawler_to_run is None:
+
+    if failed_trawler is not None and single_trawler_to_run is None:
+        logger.warning("Since %s failed, we will not flush out stale events, as we can't be sure it's not a temporary failure" % source.name)
         all_instructions.append(DeleteOutstanding())
 
     if options.dry_run:
@@ -103,10 +108,10 @@ try:
 
         settings = load_settings(options.settings_filename)
         load_main_logging(settings.logging_config_filename)
-        
+
         if options.list_trawlers:
             list_trawlers(options, settings)
-        else:            
+        else:
             pull_events(options, settings)
 except:
     log_exception(logger, "Unrecoverable Error")

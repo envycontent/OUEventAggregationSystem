@@ -22,9 +22,6 @@ import urlparse
 
 logger = get_logger("oxtalks_api")
 
-s = requests.session()
-s.config['keep_alive'] = False
-
 def safe_unpack(l):
     if len(l) == 0:
         return None
@@ -65,7 +62,7 @@ def trim_event_name(event):
 class AddEvent(object):
     def __init__(self, event):
         self.event = event
-    
+
     def __str__(self):
         return str(self.event)
 
@@ -79,6 +76,10 @@ class OxTalksAPI(object):
         self.old_talks = None
         self.username = username
         self.auth = (username, password)
+
+    @property
+    def _standard_post_parameters(self):
+        return dict(auth=self.auth, allow_redirects=True, stream=False)
 
     def upload(self, instructions):
         if self.old_talks is None:
@@ -122,20 +123,23 @@ class OxTalksAPI(object):
                 ("talk[organiser_email]", self.username)]
 
         for l in talk.lists:
+            print l
             data.append(("talk[list_id_strings][]", str(l.id)))
-            
+
         logger.debug("UPDATE %s" % url)
 
-        response = requests.post(url, data, auth=self.auth, allow_redirects=True)
+        response = requests.post(url, data, **self._standard_post_parameters)
+
         if response.status_code != 200:
             raise OxTalksAPIException("Failed to create talk %s\nPost was %s" % (talk, data), response.content)
 
     def _delete_talk(self, talk):
         url = 'http://%s/talk/delete/%s' % (self.host, talk.id)
-        
+
         logger.debug("DELETE %s" % url)
 
-        response = requests.post(url, data=" ", auth=self.auth, allow_redirects=True)
+        response = requests.post(url, data=" ", **self._standard_post_parameters)
+
         if response.status_code != 200:
             raise OxTalksAPIException("Failed to delete talk %s" % talk, response.content)
 
@@ -146,7 +150,7 @@ class OxTalksAPI(object):
         data = {"list[name]":managed_list.name,
                 "list[list_type]":managed_list.list_type}
         logger.debug("CREATE LIST %s, %s" % (url, data))
-        response = requests.post(url, data, auth=self.auth, allow_redirects=True)
+        response = requests.post(url, data, **self._standard_post_parameters)
         if response.status_code != 200:
             raise OxTalksAPIException("Failed to create managed list %s" % managed_list.name, response.content)
         else:
@@ -186,9 +190,9 @@ class OxTalksAPI(object):
             start = dateutil.parser.parse(start)
             end, = talk_root.xpath("end_time/text()")
             end = dateutil.parser.parse(end)
-    
+
             start, end = convert_to_utc(start, end)
-            
+
             lists = []
             for list in talk_root.xpath("list"):
                 list_id, = list.xpath("id/text()")
@@ -204,7 +208,7 @@ class OxTalksAPI(object):
                     lists.append(list_manager.get_or_create_list_by_id(list_id, list_name, list_type))
                 except Exception:
                     raise OxTalksAPIException("Failed to parse list %s" % list_id)
-    
+
             master_list_id, = talk_root.xpath("series/text()")
             master_list_id = int(master_list_id)
             master_list = list_manager.get_list_by_id(master_list_id)

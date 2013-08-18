@@ -8,6 +8,10 @@ sources:
   - class: oxford_university_whatson.WhatsOn
 
   - type: ical
+    name: IT Learning Programme
+    url: http://courses.it.ox.ac.uk/courses.ics
+
+  - type: ical
     name: St Antony's College
     url: http://www.google.com/calendar/ical/it-support%40sant.ox.ac.uk/public/basic
     raw_hacks:
@@ -94,3 +98,6 @@ sources:
   - type: ical
     name: Weatherall Institute of Molecular Medicine
     url: http://www.imm.ox.ac.uk/seminars/hiu_wednesday_seminars/ics_view
+    
+  - class: daily_info.DailyInfo
+  
